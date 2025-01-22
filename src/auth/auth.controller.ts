@@ -1,7 +1,8 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignupDto } from './dto/signup.dto';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto } from 'src/auth/dto/login.dto';
+import { SignupDto } from 'src/auth/dto/signup.dto';
+import { AuthGuard } from './guards/auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -18,5 +19,16 @@ export class AuthController {
   @Post('login')
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('logout')
+  @UseGuards(AuthGuard)
+  async logout(@Request() req) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token) {
+      await this.authService.blacklistToken(token);
+    }
+    return { message: 'Logout successful' };
   }
 }
