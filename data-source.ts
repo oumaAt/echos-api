@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import * as mysql from 'mysql2/promise';
-
+import { config } from 'dotenv';
+config();
 export const AppDataSource = new DataSource({
   type: 'mysql',
   host: process.env.DATABASE_HOST,
