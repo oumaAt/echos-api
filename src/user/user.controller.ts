@@ -99,4 +99,26 @@ export class UserController {
       );
     }
   }
+
+  @UseGuards(AuthGuard, RoleGuard)
+  @Post('')
+  @Roles(Role.ADMIN)
+  async getFilteredUsers(
+    @Body('filters') filters: Record<string, any>,
+    @Body('sort')
+    sort: { field: string; order: 'asc' | 'desc' },
+  ) {
+    try {
+      const parsedFilters = filters || {};
+      const parsedSort = sort || { field: 'id', order: 'asc' };
+      const users = await this.userService.findAll(parsedFilters, parsedSort);
+      return { data: users };
+    } catch (error) {
+      console.error(error);
+      throw new HttpException(
+        "Erreur lors de la suppression de l'utilisateur",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

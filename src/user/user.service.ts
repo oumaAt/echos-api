@@ -45,4 +45,23 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
   }
+
+  async findAll(
+    filters: Record<string, any>,
+    sort: { field: string; order: string },
+  ): Promise<any[]> {
+    const where = {};
+
+    // Apply sorting
+    const sortOptions = sort
+      ? { [sort.field]: sort.order === 'desc' ? -1 : 1 }
+      : {};
+
+    console.log({ where });
+    console.log({ sortOptions });
+    return await this.userRepository.find({
+      where: filters,
+      order: sortOptions,
+    });
+  }
 }
