@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import * as mysql from 'mysql2/promise';
 import { config } from 'dotenv';
+import { Logger } from '@nestjs/common';
 config();
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -25,6 +26,6 @@ export const createDatabaseIfNotExists = async () => {
   const result = await connection.query(
     `CREATE DATABASE IF NOT EXISTS \`${process.env.DATABASE_NAME}\`;`,
   );
-  console.log(`Database "${process.env.DATABASE_NAME}" checked/created.`);
+  Logger.log(`Database "${process.env.DATABASE_NAME}" checked/created.`);
   await connection.end();
 };

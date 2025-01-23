@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
+  Logger,
   NotFoundException,
   Post,
   Request,
@@ -44,7 +45,7 @@ export class AuthController {
       return user;
     } catch (error) {
       if (error instanceof ConflictException) throw error;
-      console.error(error);
+      Logger.error(error);
       throw new HttpException(
         'Error occured when trying to SignUp',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -80,7 +81,7 @@ export class AuthController {
     } catch (error) {
       if (error instanceof NotFoundException || UnauthorizedException)
         throw error;
-      console.error(error);
+      Logger.error(error);
       throw new HttpException(
         'Error occured in Login',
         HttpStatus.INTERNAL_SERVER_ERROR,

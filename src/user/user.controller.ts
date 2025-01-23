@@ -6,6 +6,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Logger,
   NotFoundException,
   Param,
   Patch,
@@ -22,8 +23,10 @@ import { Role } from 'src/utils/enum';
 import { RoleGuard } from 'src/auth/guards/role.guard';
 import { ByIdDto } from './dto/by-id.dto';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiConflictResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
@@ -38,10 +41,29 @@ export class UserController {
 
   @UseGuards(AuthGuard)
   @Post('create')
+  @ApiOperation({
+    summary: 'Créer un nouvel utilisateur',
+    description:
+      'Crée un nouveau compte utilisateur avec les informations fournies.',
+  })
+  @ApiOkResponse({ description: 'Utilisateur créé avec succès' })
+  @ApiBadRequestResponse({ description: "Données d'entrée invalides" })
+  @ApiConflictResponse({ description: 'Le pseudonyme existe déjà' })
   async create(@Body() createUserDto: CreateUserDto) {
-    const user = await this.userService.findByUsername(createUserDto.username);
-    if (user) throw new ConflictException('Username already taken ');
-    return this.userService.create(createUserDto);
+    try {
+      const user = await this.userService.findByUsername(
+        createUserDto.username,
+      );
+      if (user) throw new ConflictException('Username already taken ');
+      return this.userService.create(createUserDto);
+    } catch (error) {
+      if (error instanceof ConflictException) throw error;
+      Logger.error(error);
+      throw new HttpException(
+        "Erreur lors de l'ajout d'un nouveau de mon profile",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @UseGuards(AuthGuard)
@@ -76,7 +98,7 @@ export class UserController {
       const user = await this.userService.findById(req.user.id);
       return { data: user };
     } catch (error) {
-      console.error(error);
+      Logger.error(error);
       throw new HttpException(
         'Erreur lors de la récuperation des informations de mon profile',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -121,7 +143,7 @@ export class UserController {
         user: await this.userService.update(req.user.id, updateUserDto),
       };
     } catch (error) {
-      console.error(error);
+      Logger.error(error);
       throw new HttpException(
         'Erreur lors de l update de mon profile',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -170,7 +192,7 @@ export class UserController {
       return { data: user };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      console.error(error);
+      Logger.error(error);
       throw new HttpException(
         "Erreur lors de l update de l'utilisateur",
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -208,7 +230,7 @@ export class UserController {
       return { message: 'Deleted successfully' };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      console.error(error);
+      Logger.error(error);
       throw new HttpException(
         "Erreur lors de la suppression de l'utilisateur",
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -270,7 +292,7 @@ export class UserController {
       const users = await this.userService.findAll(parsedFilters, parsedSort);
       return { data: users };
     } catch (error) {
-      console.error(error);
+      Logger.error(error);
       throw new HttpException(
         "Erreur lors de la suppression de l'utilisateur",
         HttpStatus.INTERNAL_SERVER_ERROR,
