@@ -21,6 +21,16 @@ import { Roles } from 'src/decorators/role.decorator';
 import { Role } from 'src/utils/enum';
 import { RoleGuard } from 'src/auth/guards/role.guard';
 import { ByIdDto } from './dto/by-id.dto';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiForbiddenResponse,
+  ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 @Controller('users')
 export class UserController {
@@ -36,7 +46,32 @@ export class UserController {
 
   @UseGuards(AuthGuard)
   @Get('profile')
-  async getProfile(@Req() req: any) {
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Récuperer des informations de l'utilisateur courant",
+    description: "Récuperation des informations de l\'utilisateur courant",
+  })
+  @ApiOkResponse({
+    description: 'Les données récupérées avec succès',
+    schema: {
+      example: {
+        user: {
+          username: 'Johndoe',
+          name: 'John Doe',
+          role: 'user',
+          address: 'Paris,France',
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Vous devez vous connecter',
+  })
+  @ApiInternalServerErrorResponse({
+    description:
+      "Erreur survenue lors de la récuperation des données de l'utilisateur courant",
+  })
+  async getCurrentUser(@Req() req: any) {
     try {
       const user = await this.userService.findById(req.user.id);
       return { data: user };
@@ -51,11 +86,39 @@ export class UserController {
 
   @UseGuards(AuthGuard)
   @Patch('profile')
-  async updateProfile(@Req() req: any, @Body() updateUserDto: UpdateUserDto) {
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Modifier les informations de l'utilisateur courant",
+    description: "Modifier des informations de l\'utilisateur courant",
+  })
+  @ApiOkResponse({
+    description: 'Profile mis à jour avec succès',
+    schema: {
+      example: {
+        user: {
+          username: 'Johndoe',
+          name: 'John Doe',
+          role: 'user',
+          address: 'Paris,France',
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Vous devez vous connecter',
+  })
+  @ApiInternalServerErrorResponse({
+    description:
+      "Erreur survenue lors de la modification des données de l'utilisateur courant",
+  })
+  async updateCurrentUser(
+    @Req() req: any,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     console.log(req.user);
     try {
       return {
-        data: await this.userService.update(req.user.id, updateUserDto),
+        user: await this.userService.update(req.user.id, updateUserDto),
       };
     } catch (error) {
       console.error(error);
@@ -69,6 +132,38 @@ export class UserController {
   @UseGuards(AuthGuard, RoleGuard)
   @Patch(':id')
   @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Modifier les informations d'un utilisateur par son id ",
+    description:
+      "Seuls les admins sont autorisés à modifier les données d'un utilisateur par son id",
+  })
+  @ApiOkResponse({
+    description: 'Utilisateur mis à jour avec succès',
+    schema: {
+      example: {
+        user: {
+          username: 'Johndoe',
+          name: 'John Doe',
+          role: 'user',
+          address: 'Nantes,France',
+        },
+      },
+    },
+  })
+  @ApiForbiddenResponse({
+    description: "Vous n'etes pas autorisé à effectuer cette action",
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Vous devez vous connecter',
+  })
+  @ApiNotFoundResponse({
+    description: 'Cet id ne correspond à aucun utilisateur',
+  })
+  @ApiInternalServerErrorResponse({
+    description:
+      "Erreur survenue lors de la modification des données de l'utilisateur",
+  })
   async update(@Param() params: ByIdDto, @Body() updateUserDto: UpdateUserDto) {
     try {
       const user = await this.userService.update(params.id, updateUserDto);
@@ -86,6 +181,27 @@ export class UserController {
   @UseGuards(AuthGuard, RoleGuard)
   @Delete(':id')
   @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Supprimer un utilisateur par son id ',
+    description:
+      'Seuls les admins sont autorisés à supprimer un utilisateur par son id',
+  })
+  @ApiOkResponse({
+    description: 'Utilisateur supprimé avec succès',
+  })
+  @ApiForbiddenResponse({
+    description: "Vous n'etes pas autorisé à effectuer cette action",
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Vous devez vous connecter',
+  })
+  @ApiNotFoundResponse({
+    description: 'Cet id ne correspond à aucun utilisateur',
+  })
+  @ApiInternalServerErrorResponse({
+    description: "Erreur survenue lors de la suppression d'un utilisateur",
+  })
   async delete(@Param() params: ByIdDto) {
     try {
       await this.userService.delete(params.id);
@@ -103,6 +219,46 @@ export class UserController {
   @UseGuards(AuthGuard, RoleGuard)
   @Post('')
   @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Récuperer la liste des utilisateurs',
+    description:
+      'Seuls les admins sont autorisés à récuperer la liste des utilisateurs avec options de tri et filtrage par tous les champs',
+  })
+  @ApiBody({
+    description: 'Objet contenant les filtres et le tri',
+  })
+  @ApiOkResponse({
+    description: 'Utilisateurs récupéres avec succès',
+    schema: {
+      example: {
+        users: [
+          {
+            username: 'Johndoe',
+            name: 'John Doe',
+            role: 'user',
+            address: 'Nantes,France',
+          },
+          {
+            username: 'Janedoe',
+            name: 'Jane Doe',
+            role: 'user',
+            address: 'Paris,France',
+          },
+        ],
+      },
+    },
+  })
+  @ApiForbiddenResponse({
+    description: "Vous n'etes pas autorisé à effectuer cette action",
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Vous devez vous connecter',
+  })
+  @ApiInternalServerErrorResponse({
+    description:
+      "Erreur survenue lors de la suppression des données de l'utilisateur",
+  })
   async getFilteredUsers(
     @Body('filters') filters: Record<string, any>,
     @Body('sort')
