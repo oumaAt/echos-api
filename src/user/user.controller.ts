@@ -32,6 +32,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
@@ -160,6 +161,12 @@ export class UserController {
     description:
       "Seuls les admins sont autorisés à modifier les données d'un utilisateur par son id",
   })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Identifiant unique de l\'utilisateur à modifier',
+    example: 1,
+  })
   @ApiOkResponse({
     description: 'Utilisateur mis à jour avec succès',
     schema: {
@@ -209,6 +216,12 @@ export class UserController {
     description:
       'Seuls les admins sont autorisés à supprimer un utilisateur par son id',
   })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Identifiant unique de l\'utilisateur à supprimer',
+    example: 1,
+  })
   @ApiOkResponse({
     description: 'Utilisateur supprimé avec succès',
   })
@@ -248,7 +261,37 @@ export class UserController {
       'Seuls les admins sont autorisés à récuperer la liste des utilisateurs avec options de tri et filtrage par tous les champs',
   })
   @ApiBody({
-    description: 'Objet contenant les filtres et le tri',
+    description: 'Filtres et options de tri',
+    schema: {
+      type: 'object',
+      properties: {
+        filters: {
+          type: 'object',
+          additionalProperties: {
+            type: 'string',
+          },
+          example: { name: 'John Doe', role: 'admin' },
+          description: 'Filtres à appliquer aux utilisateurs',
+        },
+        sort: {
+          type: 'object',
+          properties: {
+            field: {
+              type: 'string',
+              example: 'name',
+              description: 'Champ pour le tri',
+            },
+            order: {
+              type: 'string',
+              enum: ['asc', 'desc'],
+              example: 'asc',
+              description: 'Ordre du tri',
+            },
+          },
+          description: 'Options de tri pour les utilisateurs',
+        },
+      },
+    },
   })
   @ApiOkResponse({
     description: 'Utilisateurs récupéres avec succès',
